@@ -11,7 +11,9 @@ void clearScreen()
 
 int main()
 {
-    int boardGame[12][12], n, m, lightCorePositionX, lightCorePositionY, playerNo, playerPositionX, playerPositionY, hunterNo, hunterPositionX, hunterPositionY, wallsNo, wallsPositionX, wallsPositionY;
+    // int boardGame[12][12], n, m, lightCorePositionX, lightCorePositionY, playerNo, playerPositionX, playerPositionY, hunterNo, hunterPositionX, hunterPositionY, wallsNo, wallsPositionX, wallsPositionY;
+
+    int n, m, playerNo, hunterNo, wallsNo;
 
     int lightCorePosition[2];     // 4 col for playerNo and 2 col for X and Y
     int playersPosition[10][2];   // 10 col for playerNo and 2 col for X and Y
