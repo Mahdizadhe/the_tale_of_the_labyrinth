@@ -3,7 +3,8 @@
 #include <conio.h>
 #include <time.h>
 // #include <ctime.h>
-// #include <function.c>
+
+//====================/ Global Vars /====================//
 
 int n, m, playerCount, hunterCount, wallCount;
 char map[100][100];
@@ -20,6 +21,8 @@ int dx[4] = {-1, 1, 0, 0};
 int dy[4] = {0, 0, -1, 1};
 
 int i, j;
+
+//====================/ Functions /====================//
 
 void clearScreen()
 {
@@ -62,7 +65,6 @@ int isBlocked(int x, int y, int nx, int ny)
 
 void bfs(int sx, int sy)
 {
-
     int qx[100 * 100], qy[100 * 100];
     int front = 0, back = 0;
 
@@ -112,6 +114,8 @@ int isConnected()
     }
     return 1;
 }
+
+//====================/ Walls Generation /====================//
 
 void generateWalls(int wallCount)
 {
@@ -172,26 +176,15 @@ int distance(int x1, int y1, int x2, int y2)
 
     return xDistance + yDistance;
 }
-
-int main()
+//====================/ Core, Players, Hunters /====================//
+void placeCore()
 {
-    srand(time(NULL));
-
-    // printf("Please enter n, m, players count, players position, hunters count, hunters position, walls count, walls position\n");
-    printf("Please enter n, m, player count, hunter count, wall count\n");
-
-    scanf("%d %d", &n, &m);
-    scanf("%d", &playerCount);
-    scanf("%d", &hunterCount);
-    scanf("%d", &wallCount);
-
-    //====================/ Core /====================//
-
     lightCorePosition[0] = rand() % n;
     lightCorePosition[1] = rand() % m;
+}
 
-    //====================/ Players /====================//
-
+void placePlayers()
+{
     for (i = 0; i < playerCount; i++)
     {
         int x, y, error;
@@ -219,9 +212,10 @@ int main()
         playersPosition[i][0] = x;
         playersPosition[i][1] = y;
     }
+}
 
-    //====================/ Hunters /====================//
-
+void placeHunters()
+{
     for (i = 0; i < hunterCount; i++)
     {
         int x, y, error;
@@ -256,23 +250,12 @@ int main()
         huntersPosition[i][0] = x;
         huntersPosition[i][1] = y;
     }
+}
 
-    //====================/ Walls /====================//
+//====================/ Map Init /====================//
 
-    do
-    {
-        for (i = 0; i < n; i++)
-        {
-            for (j = 0; j < m; j++)
-            {
-                vWall[i][j] = hWall[i][j] = 0;
-            }
-        }
-        generateWalls(wallCount);
-    } while (!isConnected());
-
-    //====================/ Map /====================//
-
+void initMap()
+{
     for (i = 0; i < n; i++)
     {
         for (j = 0; j < m; j++)
@@ -292,24 +275,12 @@ int main()
     {
         map[huntersPosition[i][0]][huntersPosition[i][1]] = 'H';
     }
+}
 
-    clearScreen();
+//====================/ Map Printing /====================//
 
-    //====================/ information /====================//
-
-    printf("CORE POSITION : [%d - %d]\n", lightCorePosition[0], lightCorePosition[1]);
-    printf("******************************\n");
-    for (i = 0; i < playerCount; i++)
-    {
-        printf("PLAYER NO %d POSITION : [%d - %d]\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
-    }
-    printf("******************************\n");
-    for (i = 0; i < hunterCount; i++)
-    {
-        printf("HUNTER NO %d POSITION : [%d - %d]\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
-    }
-    printf("******************************\n");
-
+void printMap()
+{
     for (i = 0; i < n; i++)
     {
         // ----- Top walls -----
@@ -343,6 +314,68 @@ int main()
         printf("*---");
     }
     printf("*\n");
+}
 
+//====================/ Main /====================//
+
+int main()
+{
+    srand(time(NULL));
+
+    // printf("Please enter n, m, players count, players position, hunters count, hunters position, walls count, walls position\n");
+    printf("Please enter n, m, player count, hunter count, wall count\n");
+
+    scanf("%d %d", &n, &m);
+    scanf("%d", &playerCount);
+    scanf("%d", &hunterCount);
+    scanf("%d", &wallCount);
+
+    //====================/ Core /====================//
+
+    placeCore();
+
+    //====================/ Players /====================//
+
+    placePlayers();
+
+    //====================/ Hunters /====================//
+
+    placeHunters();
+
+    //====================/ Walls /====================//
+
+    do
+    {
+        for (i = 0; i < n; i++)
+        {
+            for (j = 0; j < m; j++)
+            {
+                vWall[i][j] = hWall[i][j] = 0;
+            }
+        }
+        generateWalls(wallCount); // there is a bug
+    } while (!isConnected());
+
+    //====================/ Map /====================//
+
+    initMap();
+    clearScreen();
+
+    //====================/ information /====================//
+
+    printf("CORE POSITION : [%d - %d]\n", lightCorePosition[0], lightCorePosition[1]);
+    printf("*******************************\n");
+    for (i = 0; i < playerCount; i++)
+    {
+        printf("PLAYER NO. %d POSITION : [%d - %d]\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
+    }
+    printf("*******************************\n");
+    for (i = 0; i < hunterCount; i++)
+    {
+        printf("HUNTER NO. %d POSITION : [%d - %d]\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
+    }
+    printf("*******************************\n\n");
+
+    printMap();
     return 0;
 }
