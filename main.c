@@ -5,181 +5,273 @@
 // #include <ctime.h>
 // #include <function.c>
 
+int n, m, playerCount, hunterCount, wallCount;
+char map[100][100];
+
+int lightCorePosition[2];   // 1 col for light core and 2 row for X and Y
+int playersPosition[10][2]; // 10 col for playerCount and 2 row for X and Y
+int huntersPosition[10][2]; // 10 col for hunterCount and 2 row for X and Y
+
+int vWall[100][100] = {0}; // this array is for walls between (x) and (x + 1)
+int hWall[100][100] = {0}; // this array is for walls between (y) and (y + 1)
+
+int visited[100][100]; // this array is for checking connection of cells
+int dx[4] = {-1, 1, 0, 0};
+int dy[4] = {0, 0, -1, 1};
+
+int i, j;
+
 void clearScreen()
 {
     system("cls");
 }
 
+int inRange(int x, int y)
+{
+    return (x >= 0 && x < n && y >= 0 && y < m);
+}
+
+// isBlocked() = 0 -> There is no wall
+// isBlocked() = 1 -> There is a wall
+int isBlocked(int x, int y, int nx, int ny)
+{
+    if (x == nx)
+    {
+        if (ny > y)
+        {
+            return hWall[x][y];
+        }
+        else
+        {
+            return hWall[x][ny];
+        }
+    }
+    if (y == ny)
+    {
+        if (nx > x)
+        {
+            return vWall[x][y];
+        }
+        else
+        {
+            return vWall[nx][y];
+        }
+    }
+    return 0;
+}
+
+void bfs(int sx, int sy)
+{
+
+    int qx[100 * 100], qy[100 * 100];
+    int front = 0, back = 0;
+
+    qx[back] = sx;
+    qy[back++] = sy;
+    visited[sx][sy] = 1;
+
+    while (front < back)
+    {
+        int x = qx[front];
+        int y = qy[front++];
+        for (i = 0; i < 4; i++)
+        {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if (inRange(nx, ny) && !visited[nx][ny] && !isBlocked(x, y, nx, ny))
+            {
+                visited[nx][ny] = 1;
+                qx[back] = nx;
+                qy[back++] = ny;
+            }
+        }
+    }
+}
+
+int isConnected()
+{
+
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < m; j++)
+        {
+            visited[i][j] = 0;
+        }
+    }
+
+    bfs(0, 0);
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < m; j++)
+        {
+            if (!visited[i][j])
+            {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+void generateWalls(int wallCount)
+{
+
+    for (i = 0; i < wallCount; i++)
+    {
+        int x, y, type, error;
+        do
+        {
+            error = 0;
+            type = rand() % 2; // 0 -> V , 1 -> H
+            if (type == 0)
+            {
+                x = rand() % (n - 1);
+                y = rand() % m;
+
+                if (vWall[x][y])
+                {
+                    error = 1;
+                }
+            }
+            else
+            {
+                x = rand() % n;
+                y = rand() % (m - 1);
+
+                if (hWall[x][y])
+                {
+                    error = 1;
+                }
+            }
+        } while (error);
+
+        if (type == 0)
+        {
+            vWall[x][y] = 1;
+        }
+        else
+        {
+            hWall[x][y] = 1;
+        }
+    }
+}
+
+int distance(int x1, int y1, int x2, int y2)
+{
+    int xDistance = x1 - x2;
+    if (xDistance < 0)
+    {
+        xDistance *= (-1);
+    }
+
+    int yDistance = y1 - y2;
+    if (yDistance < 0)
+    {
+        yDistance *= (-1);
+    }
+
+    return xDistance + yDistance;
+}
+
 int main()
 {
-    printf("Please enter n, m, player count, player position, hunter count, hunter position, wall count, wall position\n");
-    int n, m, playerCount, hunterCount, wallsCount;
+    srand(time(NULL));
 
-    char map[100][100];
+    // printf("Please enter n, m, players count, players position, hunters count, hunters position, walls count, walls position\n");
+    printf("Please enter n, m, player count, hunter count, wall count\n");
 
-    int lightCorePosition[2];   // 1 col for light core and 2 row for X and Y
-    int playersPosition[10][2]; // 10 col for playerCount and 2 row for X and Y
-    int huntersPosition[10][2]; // 10 col for hunterCount and 2 row for X and Y
-    int wallsPosition[100][2];  // 100 col for wallCount and 1 row X and 1 row for Y
-
-    int vWall[100][100] = {0}; // this array is for walls between (x) and (x + 1)
-    int hWall[100][100] = {0}; // this array is for walls between (y) and (y + 1)
-
-    int i, j;
-    int LCERR;
     scanf("%d %d", &n, &m);
-    do
-    {
-        LCERR = 1;
-        scanf("%d %d", &lightCorePosition[0], &lightCorePosition[1]);
-
-        if (
-            lightCorePosition[0] < 0 || lightCorePosition[0] >= n ||
-            lightCorePosition[1] < 0 || lightCorePosition[1] >= m)
-        {
-            printf("Light core position error\nPosition must be in range 0 to %d and board 0 to %d\n", n - 1, m - 1);
-            LCERR = 0;
-        }
-    } while (!LCERR);
-
-    int xDistanceCore, yDistanceCore;
-    int xDistancePlayer, yDistancePlayer;
-
-    int PYERR;
     scanf("%d", &playerCount);
+    scanf("%d", &hunterCount);
+    scanf("%d", &wallCount);
+
+    //====================/ Core /====================//
+
+    lightCorePosition[0] = rand() % n;
+    lightCorePosition[1] = rand() % m;
+
+    //====================/ Players /====================//
+
     for (i = 0; i < playerCount; i++)
     {
+        int x, y, error;
         do
         {
-            PYERR = 1;
-            scanf("%d %d", &playersPosition[i][0], &playersPosition[i][1]);
-            if (
-                playersPosition[i][0] < 0 || playersPosition[i][0] >= n ||
-                playersPosition[i][1] < 0 || playersPosition[i][1] >= m)
+            error = 0;
+            x = rand() % n;
+            y = rand() % m;
+
+            if (distance(x, y, lightCorePosition[0], lightCorePosition[1]) < 2)
             {
-                printf("Player position error\nPosition must be in range 0 to %d and board 0 to %d\n", n - 1, m - 1);
-                PYERR = 0;
+                error = 1;
             }
-        } while (!PYERR);
 
-        xDistanceCore = playersPosition[i][0] - lightCorePosition[0];
-        if (xDistanceCore < 0)
-        {
-            xDistanceCore *= (-1);
-        }
-        yDistanceCore = playersPosition[i][1] - lightCorePosition[1];
-        if (yDistanceCore < 0)
-        {
-            yDistanceCore *= (-1);
-        }
+            for (j = 0; j < i; j++)
+            {
+                if (x == playersPosition[j][0] && y == playersPosition[j][1])
+                {
+                    error = 1;
+                }
+            }
 
-        if (xDistanceCore + yDistanceCore < 2)
-        {
-            printf("The minimum distance to the core must be 2 units\n");
-            i--;
-        }
+        } while (error);
+
+        playersPosition[i][0] = x;
+        playersPosition[i][1] = y;
     }
 
-    int HTERR;
-    scanf("%d", &hunterCount);
+    //====================/ Hunters /====================//
+
     for (i = 0; i < hunterCount; i++)
     {
+        int x, y, error;
         do
         {
-            HTERR = 1;
-            scanf("%d %d", &huntersPosition[i][0], &huntersPosition[i][1]);
-            if (
-                huntersPosition[i][0] < 0 || huntersPosition[i][0] >= n ||
-                huntersPosition[i][1] < 0 || huntersPosition[i][1] >= m)
-            {
-                printf("Hunter position error\nPosition must be in range 0 to %d and board 0 to %d\n", n - 1, m - 1);
-                HTERR = 0;
-            }
-        } while (!HTERR);
+            error = 0;
+            x = rand() % n;
+            y = rand() % m;
 
-        xDistanceCore = huntersPosition[i][0] - lightCorePosition[0];
-        if (xDistanceCore < 0)
-        {
-            xDistanceCore *= (-1);
-        }
-        yDistanceCore = huntersPosition[i][1] - lightCorePosition[1];
-        if (yDistanceCore < 0)
-        {
-            yDistanceCore *= (-1);
-        }
-
-        if (xDistanceCore + yDistanceCore < 2)
-        {
-            printf("The minimum distance to the core must be 2 units\n");
-            i--;
-        }
-
-        for (j = 0; j < playerCount; j++)
-        {
-            xDistancePlayer = huntersPosition[i][0] - playersPosition[j][0];
-            if (xDistancePlayer < 0)
+            if (distance(x, y, lightCorePosition[0], lightCorePosition[1]) < 2)
             {
-                xDistancePlayer *= (-1);
-            }
-            yDistancePlayer = huntersPosition[i][1] - playersPosition[j][1];
-            if (yDistancePlayer < 0)
-            {
-                yDistancePlayer *= (-1);
+                error = 1;
             }
 
-            if (xDistancePlayer + yDistancePlayer < 2)
+            for (j = 0; j < playerCount; j++)
             {
-                printf("The minimum distance to the player must be 2 units\n");
-                i--;
+                if (distance(x, y, playersPosition[j][0], playersPosition[j][1]) < 2)
+                {
+                    error = 1;
+                }
             }
-        }
+
+            for (j = 0; j < i; j++)
+            {
+                if (x == huntersPosition[j][0] && y == huntersPosition[j][1])
+                {
+                    error = 1;
+                }
+            }
+
+        } while (error);
+        huntersPosition[i][0] = x;
+        huntersPosition[i][1] = y;
     }
 
-    int WLLERR;
-    scanf("%d", &wallsCount);
-    for (i = 0; i < wallsCount; i++)
+    //====================/ Walls /====================//
+
+    do
     {
-        char wallType;
-
-        do
+        for (i = 0; i < n; i++)
         {
-            WLLERR = 1;
-            scanf("%d %d %c", &wallsPosition[i][0], &wallsPosition[i][1], &wallType);
-
-            if (wallType == 'v' || wallType == 'V')
+            for (j = 0; j < m; j++)
             {
-                if (wallsPosition[i][0] == n - 1)
-                {
-                    printf("Wall error\nThe wall should not be placed of border\n");
-                    WLLERR = 0;
-                }
+                vWall[i][j] = hWall[i][j] = 0;
             }
-            if (wallType == 'h' || wallType == 'H')
-            {
-                if (wallsPosition[i][1] == m - 1)
-                {
-                    printf("Wall error\nThe wall should not be placed of border\n");
-                    WLLERR = 0;
-                }
-            }
-
-        } while (!WLLERR);
-
-        switch (wallType)
-        {
-        case 'v':
-        case 'V':
-            vWall[wallsPosition[i][0]][wallsPosition[i][1]] = 1;
-            break;
-        case 'h':
-        case 'H':
-            hWall[wallsPosition[i][0]][wallsPosition[i][1]] = 1;
-            break;
-        default:
-            printf("Error: wall type is incurrect\n");
-            i--;
         }
-    }
+        generateWalls(wallCount);
+    } while (!isConnected());
+
+    //====================/ Map /====================//
 
     for (i = 0; i < n; i++)
     {
@@ -203,16 +295,20 @@ int main()
 
     clearScreen();
 
-    // ----- information -----
-    // printf("CORE POSITION : %d - %d\n", lightCorePosition[0], lightCorePosition[1]);
-    // for (i = 0; i < playerCount; i++)
-    // {
-    //     printf("PLAYER NO %d POSITION : %d - %d\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
-    // }
-    // for (i = 0; i < hunterCount; i++)
-    // {
-    //     printf("HUNTER NO %d POSITION : %d - %d\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
-    // }
+    //====================/ information /====================//
+
+    printf("CORE POSITION : [%d - %d]\n", lightCorePosition[0], lightCorePosition[1]);
+    printf("******************************\n");
+    for (i = 0; i < playerCount; i++)
+    {
+        printf("PLAYER NO %d POSITION : [%d - %d]\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
+    }
+    printf("******************************\n");
+    for (i = 0; i < hunterCount; i++)
+    {
+        printf("HUNTER NO %d POSITION : [%d - %d]\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
+    }
+    printf("******************************\n");
 
     for (i = 0; i < n; i++)
     {
