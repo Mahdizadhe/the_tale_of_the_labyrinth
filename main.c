@@ -201,6 +201,7 @@ void placePlayers()
 
             for (j = 0; j < i; j++)
             {
+                // if (distance(x, y, playersPosition[j][0], playersPosition[j][1]) < 2)
                 if (x == playersPosition[j][0] && y == playersPosition[j][1])
                 {
                     error = 1;
@@ -240,6 +241,7 @@ void placeHunters()
 
             for (j = 0; j < i; j++)
             {
+                // if (distance(x, y, huntersPosition[j][0], huntersPosition[j][1]) < 2)
                 if (x == huntersPosition[j][0] && y == huntersPosition[j][1])
                 {
                     error = 1;
