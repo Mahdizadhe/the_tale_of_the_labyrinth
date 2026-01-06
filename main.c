@@ -4,6 +4,7 @@
 #include <time.h>
 // #include <ctime.h>
 
+
 //====================/ Global Vars /====================//
 
 int n, m, playerCount, hunterCount, wallCount;
@@ -29,6 +30,8 @@ void clearScreen()
     system("cls");
 }
 
+// inRange() = 0 -> Not within range.
+// inRange() = 1 -> It is within range.
 int inRange(int x, int y)
 {
     return (x >= 0 && x < n && y >= 0 && y < m);
@@ -65,7 +68,7 @@ int isBlocked(int x, int y, int nx, int ny)
 
 void bfs(int sx, int sy)
 {
-    int qx[100 * 100], qy[100 * 100];
+    int qx[100], qy[100];
     int front = 0, back = 0;
 
     qx[back] = sx;
@@ -318,13 +321,236 @@ void printMap()
     printf("*\n");
 }
 
+//====================/ Movement /====================//
+
+int findNearestPlayer(int hx, int hy)
+{
+    int bestIdx = 0;
+    int bestDist = distance(hx, hy, playersPosition[0][0], playersPosition[0][1]);
+
+    for (i = 1; i < playerCount; i++)
+    {
+        int newDist = distance(hx, hy, playersPosition[i][0], playersPosition[i][1]);
+        if (newDist < bestDist)
+        {
+            bestDist = newDist;
+            bestIdx = i;
+        }
+    }
+    return bestIdx;
+}
+
+int movePlayer(int idx)
+{
+    int key;
+    int x = playersPosition[idx][0];
+    int y = playersPosition[idx][1];
+
+    while (1)
+    {
+        key = getch();
+        if (key == 224)
+            key = getch();
+
+        int nx = x;
+        int ny = y;
+
+        if (key == 72) // UP
+            nx--;
+        else if (key == 80) // DOWN
+            nx++;
+        else if (key == 75) // LEFT
+            ny--;
+        else if (key == 77) // RIGHT
+            ny++;
+        else
+        {
+            printf("Move error: Invalid move\n");
+            continue;
+        }
+
+        if (!inRange(nx, ny))
+        {
+            printf("Move error: Out of map\n");
+            continue;
+        }
+
+        if (isBlocked(x, y, nx, ny))
+        {
+            printf("Move error: blocked by wall\n");
+            continue;
+        }
+
+        playersPosition[idx][0] = nx;
+        playersPosition[idx][1] = ny;
+        break;
+    }
+
+    return 1;
+}
+
+int moveHunter(int idx)
+{
+    int hx = huntersPosition[idx][0];
+    int hy = huntersPosition[idx][1];
+
+    int nearestPlayer = findNearestPlayer(hx, hy);
+    int px = playersPosition[nearestPlayer][0];
+    int py = playersPosition[nearestPlayer][1];
+    int dist = distance(hx, hy, px, py);
+
+    int bestX = hx;
+    int bestY = hy;
+    int bestDist = dist;
+
+    if (hy < py)
+    {
+        int nx = hx;
+        int ny = hy + 1;
+        if (inRange(nx, ny) && !isBlocked(hx, hy, nx, ny))
+        {
+            int d = distance(nx, ny, px, py);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                bestX = nx;
+                bestY = ny;
+            }
+        }
+    }
+    else if (hy > py)
+    {
+        int nx = hx;
+        int ny = hy - 1;
+        if (inRange(nx, ny) && !isBlocked(hx, hy, nx, ny))
+        {
+            int d = distance(nx, ny, px, py);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                bestX = nx;
+                bestY = ny;
+            }
+        }
+    }
+
+    if (hx < px)
+    {
+        int nx = hx + 1;
+        int ny = hy;
+        if (inRange(nx, ny) && !isBlocked(hx, hy, nx, ny))
+        {
+            int d = distance(nx, ny, px, py);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                bestX = nx;
+                bestY = ny;
+            }
+        }
+    }
+    else if (hx > px)
+    {
+        int nx = hx - 1;
+        int ny = hy;
+        if (inRange(nx, ny) && !isBlocked(hx, hy, nx, ny))
+        {
+            int d = distance(nx, ny, px, py);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                bestX = nx;
+                bestY = ny;
+            }
+        }
+    }
+    huntersPosition[idx][0] = bestX;
+    huntersPosition[idx][1] = bestY;
+    return 1;
+}
+
+//====================/ Game /====================//
+// gameState() = 0 -> resume
+// gameState() = 1 -> lose game
+// gameState() = 2 -> won game
+int gameState()
+{
+    //------lose------
+    for (i = 0; i < hunterCount; i++)
+    {
+        for (j = 0; j < playerCount; j++)
+        {
+            if (huntersPosition[i][0] == playersPosition[j][0] && huntersPosition[i][1] == playersPosition[j][1])
+            {
+                return 1;
+            }
+        }
+    }
+    //------victory------
+    for (i = 0; i < playerCount; i++)
+    {
+
+        if (playersPosition[i][0] == lightCorePosition[0] && playersPosition[i][1] == lightCorePosition[1])
+        {
+            return 2;
+        }
+    }
+    return 0;
+}
+
+void game()
+{
+    while (1)
+    {
+        //====================/ init map /====================//
+
+        initMap();
+        clearScreen();
+
+        //====================/ information /====================//
+
+        printf("CORE POSITION : [%d - %d]\n", lightCorePosition[0], lightCorePosition[1]);
+        printf("*******************************\n");
+        for (i = 0; i < playerCount; i++)
+        {
+            printf("PLAYER NO. %d POSITION : [%d - %d]\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
+        }
+        printf("*******************************\n");
+        for (i = 0; i < hunterCount; i++)
+        {
+            printf("HUNTER NO. %d POSITION : [%d - %d]\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
+        }
+        printf("*******************************\n\n");
+
+        //====================/ print map /====================//
+
+        printMap();
+
+        //====================/ movement /====================//
+
+        for (i = 0; i < playerCount; i++)
+        {
+            movePlayer(i);
+            if (gameState() != 0)
+                return;
+        }
+
+        for (i = 0; i < hunterCount; i++)
+        {
+            moveHunter(i);
+            moveHunter(i);
+        }
+        if (gameState() != 0)
+            return;
+    }
+}
+
 //====================/ Main /====================//
 
 int main()
 {
     srand(time(NULL));
 
-    // printf("Please enter n, m, players count, players position, hunters count, hunters position, walls count, walls position\n");
     printf("Please enter n, m, player count, hunter count, wall count\n");
 
     scanf("%d %d", &n, &m);
@@ -358,26 +584,21 @@ int main()
         generateWalls(wallCount); // there is a bug
     } while (!isConnected());
 
-    //====================/ Map /====================//
+    //====================/ Game /====================//
 
-    initMap();
+    game();
+
     clearScreen();
-
-    //====================/ information /====================//
-
-    printf("CORE POSITION : [%d - %d]\n", lightCorePosition[0], lightCorePosition[1]);
-    printf("*******************************\n");
-    for (i = 0; i < playerCount; i++)
+    if (gameState() == 1)
     {
-        printf("PLAYER NO. %d POSITION : [%d - %d]\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
+        clearScreen();
+        printf("YOU LOSE");
     }
-    printf("*******************************\n");
-    for (i = 0; i < hunterCount; i++)
+    else
     {
-        printf("HUNTER NO. %d POSITION : [%d - %d]\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
+        clearScreen();
+        printf("YOU WON");
     }
-    printf("*******************************\n\n");
 
-    printMap();
     return 0;
 }
