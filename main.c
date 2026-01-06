@@ -4,15 +4,22 @@
 #include <time.h>
 // #include <ctime.h>
 
+//====================/ Struct /====================//
+
+struct Entity
+{
+    int x;
+    int y;
+};
 
 //====================/ Global Vars /====================//
 
 int n, m, playerCount, hunterCount, wallCount;
 char map[100][100];
 
-int lightCorePosition[2];   // 1 col for light core and 2 row for X and Y
-int playersPosition[10][2]; // 10 col for playerCount and 2 row for X and Y
-int huntersPosition[10][2]; // 10 col for hunterCount and 2 row for X and Y
+struct Entity core;
+struct Entity players[10];
+struct Entity hunters[10];
 
 int vWall[100][100] = {0}; // this array is for walls between (x) and (x + 1)
 int hWall[100][100] = {0}; // this array is for walls between (y) and (y + 1)
@@ -68,7 +75,7 @@ int isBlocked(int x, int y, int nx, int ny)
 
 void bfs(int sx, int sy)
 {
-    int qx[100], qy[100];
+    int qx[10000], qy[10000];
     int front = 0, back = 0;
 
     qx[back] = sx;
@@ -182,8 +189,8 @@ int distance(int x1, int y1, int x2, int y2)
 //====================/ Core, Players, Hunters /====================//
 void placeCore()
 {
-    lightCorePosition[0] = rand() % n;
-    lightCorePosition[1] = rand() % m;
+    core.x = rand() % n;
+    core.y = rand() % m;
 }
 
 void placePlayers()
@@ -197,15 +204,14 @@ void placePlayers()
             x = rand() % n;
             y = rand() % m;
 
-            if (distance(x, y, lightCorePosition[0], lightCorePosition[1]) < 2)
+            if (distance(x, y, core.x, core.y) < 2)
             {
                 error = 1;
             }
 
             for (j = 0; j < i; j++)
             {
-                // if (distance(x, y, playersPosition[j][0], playersPosition[j][1]) < 2)
-                if (x == playersPosition[j][0] && y == playersPosition[j][1])
+                if (x == players[j].x && y == players[j].y)
                 {
                     error = 1;
                 }
@@ -213,8 +219,8 @@ void placePlayers()
 
         } while (error);
 
-        playersPosition[i][0] = x;
-        playersPosition[i][1] = y;
+        players[i].x = x;
+        players[i].y = y;
     }
 }
 
@@ -229,14 +235,14 @@ void placeHunters()
             x = rand() % n;
             y = rand() % m;
 
-            if (distance(x, y, lightCorePosition[0], lightCorePosition[1]) < 2)
+            if (distance(x, y, core.x, core.y) < 2)
             {
                 error = 1;
             }
 
             for (j = 0; j < playerCount; j++)
             {
-                if (distance(x, y, playersPosition[j][0], playersPosition[j][1]) < 2)
+                if (distance(x, y, players[j].x, players[j].y) < 2)
                 {
                     error = 1;
                 }
@@ -244,16 +250,15 @@ void placeHunters()
 
             for (j = 0; j < i; j++)
             {
-                // if (distance(x, y, huntersPosition[j][0], huntersPosition[j][1]) < 2)
-                if (x == huntersPosition[j][0] && y == huntersPosition[j][1])
+                if (x == hunters[j].x && y == hunters[j].y)
                 {
                     error = 1;
                 }
             }
 
         } while (error);
-        huntersPosition[i][0] = x;
-        huntersPosition[i][1] = y;
+        hunters[i].x = x;
+        hunters[i].y = y;
     }
 }
 
@@ -269,16 +274,16 @@ void initMap()
         }
     }
 
-    map[lightCorePosition[0]][lightCorePosition[1]] = 'C';
+    map[core.x][core.y] = 'C';
 
     for (i = 0; i < playerCount; i++)
     {
-        map[playersPosition[i][0]][playersPosition[i][1]] = 'P';
+        map[players[i].x][players[i].y] = 'P';
     }
 
     for (i = 0; i < hunterCount; i++)
     {
-        map[huntersPosition[i][0]][huntersPosition[i][1]] = 'H';
+        map[hunters[i].x][hunters[i].y] = 'H';
     }
 }
 
@@ -306,7 +311,6 @@ void printMap()
                 printf("|");
             else
                 printf(" ");
-
             printf(" %c ", map[i][j]);
         }
         printf("|\n");
@@ -323,14 +327,16 @@ void printMap()
 
 //====================/ Movement /====================//
 
-int findNearestPlayer(int hx, int hy)
+int findNearestPlayer(int idx)
 {
+    int hx = hunters[idx].x;
+    int hy = hunters[idx].y;
     int bestIdx = 0;
-    int bestDist = distance(hx, hy, playersPosition[0][0], playersPosition[0][1]);
+    int bestDist = distance(hx, hy, players[0].x, players[0].y);
 
     for (i = 1; i < playerCount; i++)
     {
-        int newDist = distance(hx, hy, playersPosition[i][0], playersPosition[i][1]);
+        int newDist = distance(hx, hy, players[i].x, players[i].y);
         if (newDist < bestDist)
         {
             bestDist = newDist;
@@ -343,8 +349,8 @@ int findNearestPlayer(int hx, int hy)
 int movePlayer(int idx)
 {
     int key;
-    int x = playersPosition[idx][0];
-    int y = playersPosition[idx][1];
+    int x = players[idx].x;
+    int y = players[idx].y;
 
     while (1)
     {
@@ -381,8 +387,8 @@ int movePlayer(int idx)
             continue;
         }
 
-        playersPosition[idx][0] = nx;
-        playersPosition[idx][1] = ny;
+        players[idx].x = nx;
+        players[idx].y = ny;
         break;
     }
 
@@ -391,12 +397,12 @@ int movePlayer(int idx)
 
 int moveHunter(int idx)
 {
-    int hx = huntersPosition[idx][0];
-    int hy = huntersPosition[idx][1];
+    int hx = hunters[idx].x;
+    int hy = hunters[idx].y;
 
-    int nearestPlayer = findNearestPlayer(hx, hy);
-    int px = playersPosition[nearestPlayer][0];
-    int py = playersPosition[nearestPlayer][1];
+    int nearestPlayer = findNearestPlayer(idx);
+    int px = players[nearestPlayer].x;
+    int py = players[nearestPlayer].y;
     int dist = distance(hx, hy, px, py);
 
     int bestX = hx;
@@ -464,8 +470,8 @@ int moveHunter(int idx)
             }
         }
     }
-    huntersPosition[idx][0] = bestX;
-    huntersPosition[idx][1] = bestY;
+    hunters[idx].x = bestX;
+    hunters[idx].y = bestY;
     return 1;
 }
 
@@ -480,7 +486,7 @@ int gameState()
     {
         for (j = 0; j < playerCount; j++)
         {
-            if (huntersPosition[i][0] == playersPosition[j][0] && huntersPosition[i][1] == playersPosition[j][1])
+            if (hunters[i].x == players[j].x && hunters[i].y == players[j].y)
             {
                 return 1;
             }
@@ -490,7 +496,7 @@ int gameState()
     for (i = 0; i < playerCount; i++)
     {
 
-        if (playersPosition[i][0] == lightCorePosition[0] && playersPosition[i][1] == lightCorePosition[1])
+        if (players[i].x == core.x && players[i].y == core.y)
         {
             return 2;
         }
@@ -509,16 +515,16 @@ void game()
 
         //====================/ information /====================//
 
-        printf("CORE POSITION : [%d - %d]\n", lightCorePosition[0], lightCorePosition[1]);
+        printf("CORE POSITION : [%d - %d]\n", core.x, core.y);
         printf("*******************************\n");
         for (i = 0; i < playerCount; i++)
         {
-            printf("PLAYER NO. %d POSITION : [%d - %d]\n", i + 1, playersPosition[i][0], playersPosition[i][1]);
+            printf("PLAYER NO. %d POSITION : [%d - %d]\n", i + 1, players[i].x, players[i].y);
         }
         printf("*******************************\n");
         for (i = 0; i < hunterCount; i++)
         {
-            printf("HUNTER NO. %d POSITION : [%d - %d]\n", i + 1, huntersPosition[i][0], huntersPosition[i][1]);
+            printf("HUNTER NO. %d POSITION : [%d - %d]\n", i + 1, hunters[i].x, hunters[i].y);
         }
         printf("*******************************\n\n");
 
