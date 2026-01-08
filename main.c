@@ -369,6 +369,8 @@ int movePlayer(int idx)
             ny--;
         else if (key == 77) // RIGHT
             ny++;
+        else if (key == 'S' || key == 's')
+            break;
         else
         {
             printf("Move error: Invalid move\n");
@@ -557,53 +559,99 @@ int main()
 {
     srand(time(NULL));
 
-    printf("Please enter n, m, player count, hunter count, wall count\n");
+    int code;
 
-    scanf("%d %d", &n, &m);
-    scanf("%d", &playerCount);
-    scanf("%d", &hunterCount);
-    scanf("%d", &wallCount);
-
-    //====================/ Core /====================//
-
-    placeCore();
-
-    //====================/ Players /====================//
-
-    placePlayers();
-
-    //====================/ Hunters /====================//
-
-    placeHunters();
-
-    //====================/ Walls /====================//
-
-    do
+    while (1)
     {
-        for (i = 0; i < n; i++)
+        clearScreen();
+
+        printf("THE TALE OF THE LABYRINTH\nPlease enter any code:\n");
+        printf("1. START GAME\n");
+        printf("2. CONTINUE\n");
+        printf("3. HOW TO PLAY\n");
+        printf("4. CREDITS\n");
+        printf("5. EXIT\n");
+
+        scanf("%d", &code);
+        if (code == 1)
         {
-            for (j = 0; j < m; j++)
+            clearScreen();
+            printf("Please enter n, m, player count, hunter count, wall count\n");
+
+            scanf("%d %d", &n, &m);
+            scanf("%d", &playerCount);
+            scanf("%d", &hunterCount);
+            scanf("%d", &wallCount);
+
+            //====================/ Core /====================//
+
+            placeCore();
+
+            //====================/ Players /====================//
+
+            placePlayers();
+
+            //====================/ Hunters /====================//
+
+            placeHunters();
+
+            //====================/ Walls /====================//
+
+            do
             {
-                vWall[i][j] = hWall[i][j] = 0;
+                for (i = 0; i < n; i++)
+                {
+                    for (j = 0; j < m; j++)
+                    {
+                        vWall[i][j] = hWall[i][j] = 0;
+                    }
+                }
+                generateWalls(wallCount); // there is a bug
+            } while (!isConnected());
+
+            //====================/ Game /====================//
+
+            game();
+
+            clearScreen();
+            if (gameState() == 1)
+            {
+                printf("YOU LOSE\n");
             }
+            else
+            {
+                printf("YOU WON\n");
+            }
+            printf("Press eny key to back to menu\n");
+            getch();
         }
-        generateWalls(wallCount); // there is a bug
-    } while (!isConnected());
-
-    //====================/ Game /====================//
-
-    game();
-
-    clearScreen();
-    if (gameState() == 1)
-    {
-        clearScreen();
-        printf("YOU LOSE");
-    }
-    else
-    {
-        clearScreen();
-        printf("YOU WON");
+        else if (code == 2)
+        {
+            clearScreen();
+            printf("Continue is not implemented yet!\n");
+            printf("Press eny key to back to menu\n");
+            getch();
+        }
+        else if (code == 3)
+        {
+            clearScreen();
+            printf("Use arrow keys to move\n");
+            printf("Use 's' to delete turn (not moving)\n");
+            printf("Press eny key to back to menu\n");
+            getch();
+        }
+        else if (code == 4)
+        {
+            clearScreen();
+            printf("STUDENT: MOHAMMAD MAHDIZADHE\n");
+            printf("STUDENT ID: 4042262277\n");
+            printf("Press eny key to back to menu\n");
+            getch();
+        }
+        else if (code == 5)
+        {
+            break;
+        }
     }
 
     return 0;
