@@ -2,7 +2,6 @@
 #include <windows.h>
 #include <conio.h>
 #include <time.h>
-// #include <ctime.h>
 
 //====================/ Struct /====================//
 
@@ -10,6 +9,8 @@ struct Entity
 {
     int x;
     int y;
+    int alive;
+    int tempWallCount;
 };
 
 //====================/ Global Vars /====================//
@@ -23,6 +24,12 @@ struct Entity hunters[10];
 
 int vWall[100][100] = {0}; // this array is for walls between (x) and (x + 1)
 int hWall[100][100] = {0}; // this array is for walls between (y) and (y + 1)
+
+int vTempWall[100][100] = {0};
+int hTempWall[100][100] = {0};
+
+int vTempTime[100][100];
+int hTempTime[100][100];
 
 int visited[100][100]; // this array is for checking connection of cells
 int dx[4] = {-1, 1, 0, 0};
@@ -52,22 +59,22 @@ int isBlocked(int x, int y, int nx, int ny)
     {
         if (ny > y)
         {
-            return hWall[x][y];
+            return hWall[x][y] || hTempWall[x][y];
         }
         else
         {
-            return hWall[x][ny];
+            return hWall[x][ny] || hTempWall[x][ny];
         }
     }
     if (y == ny)
     {
         if (nx > x)
         {
-            return vWall[x][y];
+            return vWall[x][y] || vTempWall[x][y];
         }
         else
         {
-            return vWall[nx][y];
+            return vWall[nx][y] || vTempWall[nx][y];
         }
     }
     return 0;
@@ -197,6 +204,8 @@ void placePlayers()
 {
     for (i = 0; i < playerCount; i++)
     {
+        players[i].alive = 1;
+        players[i].tempWallCount = max(min(n, m) / 3, 1);
         int x, y, error;
         do
         {
@@ -278,7 +287,8 @@ void initMap()
 
     for (i = 0; i < playerCount; i++)
     {
-        map[players[i].x][players[i].y] = 'P';
+        if (players[i].alive)
+            map[players[i].x][players[i].y] = 'P';
     }
 
     for (i = 0; i < hunterCount; i++)
@@ -299,6 +309,8 @@ void printMap()
             printf("*");
             if (i == 0 || vWall[i - 1][j])
                 printf("---");
+            else if (vTempWall[i - 1][j])
+                printf("~~~");
             else
                 printf("   ");
         }
@@ -309,6 +321,8 @@ void printMap()
         {
             if (j == 0 || hWall[i][j - 1])
                 printf("|");
+            else if (hTempWall[i][j - 1])
+                printf("/");
             else
                 printf(" ");
             printf(" %c ", map[i][j]);
@@ -327,19 +341,88 @@ void printMap()
 
 //====================/ Movement /====================//
 
+int nearestHunterDistance(int x, int y)
+{
+    int minDist = distance(x, y, hunters[0].x, hunters[0].y);
+    for (int i = 1; i < hunterCount; i++)
+    {
+        int d = distance(x, y, hunters[i].x, hunters[i].y);
+        if (d < minDist)
+            minDist = d;
+    }
+    return minDist;
+}
+
+int suggestBestMove(int idx)
+{
+    int x = players[idx].x;
+    int y = players[idx].y;
+
+    int bestMove = 4; // STAY
+    int bestScore = -100000;
+
+    for (int dir = 0; dir < 5; dir++)
+    {
+        int nx = x;
+        int ny = y;
+
+        if (dir == 0)
+            nx--; // UP
+        else if (dir == 1)
+            nx++; // DOWN
+        else if (dir == 2)
+            ny--; // LEFT
+        else if (dir == 3)
+            ny++; // RIGHT
+        // dir == 4 => STAY
+
+        if (dir != 4)
+        {
+            if (!inRange(nx, ny))
+                continue;
+            if (isBlocked(x, y, nx, ny))
+                continue;
+        }
+
+        int score = 0;
+
+        score += (distance(x, y, core.x, core.y) - distance(nx, ny, core.x, core.y)) * 10;
+
+        int oldHunterDist = nearestHunterDistance(x, y);
+        int newHunterDist = nearestHunterDistance(nx, ny);
+        score += (newHunterDist - oldHunterDist) * 20;
+
+        if (newHunterDist <= 1)
+        {
+            score -= 1000;
+        }
+
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestMove = dir;
+        }
+    }
+
+    return bestMove;
+}
+
 int findNearestPlayer(int idx)
 {
     int hx = hunters[idx].x;
     int hy = hunters[idx].y;
-    int bestIdx = 0;
-    int bestDist = distance(hx, hy, players[0].x, players[0].y);
+    int bestIdx = -1;
+    int bestDist = 100000;
 
-    for (i = 1; i < playerCount; i++)
+    for (i = 0; i < playerCount; i++)
     {
-        int newDist = distance(hx, hy, players[i].x, players[i].y);
-        if (newDist < bestDist)
+        if (!players[i].alive)
+            continue;
+
+        int d = distance(hx, hy, players[i].x, players[i].y);
+        if (d < bestDist)
         {
-            bestDist = newDist;
+            bestDist = d;
             bestIdx = i;
         }
     }
@@ -371,6 +454,30 @@ int movePlayer(int idx)
             ny++;
         else if (key == 'S' || key == 's')
             break;
+        else if (key == 'V' || key == 'v')
+        {
+            if (y >= m - 1 || vWall[x][y] || vTempWall[x][y])
+            {
+                printf("Cannot place a vertical wall\n");
+                continue;
+            }
+            vTempWall[x][y] = 1;
+            vTempTime[x][y] = 2;
+
+            break;
+        }
+        else if (key == 'H' || key == 'h')
+        {
+            if (x >= n - 1 || hWall[x][y] || hTempWall[x][y])
+            {
+                printf("Cannot place a horizonetal wall\n");
+                continue;
+            }
+            hTempWall[x][y] = 1;
+            hTempTime[x][y] = 2;
+
+            break;
+        }
         else
         {
             printf("Move error: Invalid move\n");
@@ -397,12 +504,36 @@ int movePlayer(int idx)
     return 1;
 }
 
+void updateTempWall()
+{
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < m; j++)
+        {
+            if (vTempWall[i][j])
+            {
+                vTempTime[i][j]--;
+                if (vTempTime[i][j] == 0)
+                    vTempWall[i][j] = 0;
+            }
+            if (hTempWall[i][j])
+            {
+                hTempTime[i][j]--;
+                if (hTempTime[i][j] == 0)
+                    hTempWall[i][j] = 0;
+            }
+        }
+    }
+}
+
 int moveHunter(int idx)
 {
     int hx = hunters[idx].x;
     int hy = hunters[idx].y;
 
     int nearestPlayer = findNearestPlayer(idx);
+    if (nearestPlayer == -1)
+        return 0;
     int px = players[nearestPlayer].x;
     int py = players[nearestPlayer].y;
     int dist = distance(hx, hy, px, py);
@@ -483,26 +614,38 @@ int moveHunter(int idx)
 // gameState() = 2 -> won game
 int gameState()
 {
-    //------lose------
+    int aliveCount = 0;
+
     for (i = 0; i < hunterCount; i++)
     {
         for (j = 0; j < playerCount; j++)
         {
-            if (hunters[i].x == players[j].x && hunters[i].y == players[j].y)
+            if (players[j].alive && hunters[i].x == players[j].x && hunters[i].y == players[j].y)
             {
-                return 1;
+                players[j].alive = 0;
             }
         }
     }
-    //------victory------
+
     for (i = 0; i < playerCount; i++)
     {
+        if (players[i].alive)
+            aliveCount++;
+    }
 
-        if (players[i].x == core.x && players[i].y == core.y)
+    if (aliveCount == 0)
+    {
+        return 1;
+    }
+
+    for (i = 0; i < playerCount; i++)
+    {
+        if (players[i].alive && players[i].x == core.x && players[i].y == core.y)
         {
             return 2;
         }
     }
+
     return 0;
 }
 
@@ -534,18 +677,40 @@ void game()
 
         printMap();
 
+        updateTempWall();
+
         //====================/ movement /====================//
 
         for (i = 0; i < playerCount; i++)
         {
+
+            if (!players[i].alive)
+                continue;
+
+            int suggestion = suggestBestMove(i);
+
+            printf("Suggested move for PLAYER %d: ", i + 1);
+            if (suggestion == 0)
+                printf("UP\n");
+            else if (suggestion == 1)
+                printf("DOWN\n");
+            else if (suggestion == 2)
+                printf("LEFT\n");
+            else if (suggestion == 3)
+                printf("RIGHT\n");
+            else
+                printf("STAY (S)\n");
+
+            printf("PLAYER %d TURN\n", i + 1);
+
             movePlayer(i);
+
             if (gameState() != 0)
                 return;
         }
 
         for (i = 0; i < hunterCount; i++)
         {
-            moveHunter(i);
             moveHunter(i);
         }
         if (gameState() != 0)
@@ -596,7 +761,6 @@ int main()
             placeHunters();
 
             //====================/ Walls /====================//
-
             do
             {
                 for (i = 0; i < n; i++)
@@ -606,7 +770,7 @@ int main()
                         vWall[i][j] = hWall[i][j] = 0;
                     }
                 }
-                generateWalls(wallCount); // there is a bug
+                generateWalls(wallCount);
             } while (!isConnected());
 
             //====================/ Game /====================//
