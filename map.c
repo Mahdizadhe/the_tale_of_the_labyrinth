@@ -58,10 +58,10 @@ void printMap()
         for (int j = 0; j < m; j++)
         {
             printf("*"); // corner / wall intersection
-            if (i == 0 || vWall[i - 1][j])
-                printf("---"); // permanent vertical wall
-            else if (vTempWall[i - 1][j])
-                printf("~~~"); // temporary vertical wall
+            if (i == 0 || hWall[i - 1][j])
+                printf("---"); // permanent horizontal wall
+            else if (hTempWall[i - 1][j])
+                printf("~~~"); // temporary horizontal wall
             else
                 printf("   "); // empty space
         }
@@ -70,12 +70,12 @@ void printMap()
         // ----- Cells with vertical walls -----
         for (int j = 0; j < m; j++)
         {
-            if (j == 0 || hWall[i][j - 1])
+            if (j == 0 || vWall[i][j - 1])
                 printf("|"); // permanent horizontal wall
-            else if (hTempWall[i][j - 1])
-                printf("/"); // temporary horizontal wall
+            else if (vTempWall[i][j - 1])
+                printf("/"); // temporary vertical wall
             else
-                printf(" "); // empty space
+                printf(" ");           // empty space
             printf(" %c ", map[i][j]); // print cell content
         }
         printf("|\n");

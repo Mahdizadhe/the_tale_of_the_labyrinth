@@ -6,21 +6,21 @@
 
 int wallCount; // Total number of walls to generate
 
-// Vertical -> عمودی
-// Vertical walls: vWall[x][y] represents wall between (x, y) and (x+1, y)
-int vWall[100][100];
-
 // Horizontal -> افقی
-// Horizontal walls: hWall[x][y] represents wall between (x, y) and (x, y+1)
+// Horizontal walls: vWall[x][y] represents wall between (x, y) and (x, y+1)
 int hWall[100][100];
 
+// Vertical -> عمودی
+// Vertical walls: hWall[x][y] represents wall between (x, y) and (x+1, y)
+int vWall[100][100];
+
 // Temporary walls (placed by players)
-int vTempWall[100][100];
 int hTempWall[100][100];
+int vTempWall[100][100];
 
 // Duration timers for temporary walls
-int vTempTime[100][100];
 int hTempTime[100][100];
+int vTempTime[100][100];
 
 // Visited array for BFS during connectivity check
 int visited[100][100];
@@ -45,19 +45,19 @@ int inRange(int x, int y)
 // Returns 1 if blocked, 0 if free
 int isBlocked(int x, int y, int nx, int ny)
 {
-    if (x == nx) // Moving vertically
+    if (x == nx) // Moving horizontally
     {
         if (ny > y)
-            return hWall[x][y] || hTempWall[x][y]; // wall below current
+            return vWall[x][y] || vTempWall[x][y]; // wall below right
         else
-            return hWall[x][ny] || hTempWall[x][ny]; // wall above next
+            return vWall[x][ny] || vTempWall[x][ny]; // wall above left
     }
-    if (y == ny) // Moving horizontally
+    if (y == ny) // Moving vertically
     {
         if (nx > x)
-            return vWall[x][y] || vTempWall[x][y]; // wall to the right
+            return hWall[x][y] || hTempWall[x][y]; // wall to the top
         else
-            return vWall[nx][y] || vTempWall[nx][y]; // wall to the left
+            return hWall[nx][y] || hTempWall[nx][y]; // wall to the bot
     }
 }
 
@@ -125,27 +125,27 @@ void generateWalls(int wallCount)
             error = 0;
             type = rand() % 2; // 0 = vertical, 1 = horizontal
 
-            if (type == 0) // Vertical wall
+            if (type == 0) // Horizontal  wall
             {
                 x = rand() % (n - 1);
                 y = rand() % m;
-                if (vWall[x][y])
+                if (hWall[x][y])
                     error = 1; // Already a wall here
             }
-            else // Horizontal wall
+            else // Vertical wall
             {
                 x = rand() % n;
                 y = rand() % (m - 1);
-                if (hWall[x][y])
+                if (vWall[x][y])
                     error = 1; // Already a wall here
             }
         } while (error);
 
         // Place the wall
         if (type == 0)
-            vWall[x][y] = 1;
-        else
             hWall[x][y] = 1;
+        else
+            vWall[x][y] = 1;
     }
 }
 
@@ -158,17 +158,17 @@ void updateTempWall()
     {
         for (int j = 0; j < m; j++)
         {
-            if (vTempWall[i][j])
-            {
-                vTempTime[i][j]--;
-                if (vTempTime[i][j] == 0)
-                    vTempWall[i][j] = 0; // Remove expired wall
-            }
             if (hTempWall[i][j])
             {
                 hTempTime[i][j]--;
                 if (hTempTime[i][j] == 0)
                     hTempWall[i][j] = 0; // Remove expired wall
+            }
+            if (vTempWall[i][j])
+            {
+                vTempTime[i][j]--;
+                if (vTempTime[i][j] == 0)
+                    vTempWall[i][j] = 0; // Remove expired wall
             }
         }
     }

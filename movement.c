@@ -198,43 +198,43 @@ int movePlayer(int idx)
             // Place the wall in the chosen direction
             if (dir == 1) // UP
             {
-                if (x <= 0 || vWall[x - 1][y] || vTempWall[x - 1][y])
+                if (x <= 0 || hWall[x - 1][y] || hTempWall[x - 1][y])
                 {
                     printf("Invalid wall position\n");
                     continue;
                 }
-                vTempWall[x - 1][y] = 1;
-                vTempTime[x - 1][y] = 2;
+                hTempWall[x - 1][y] = 1;
+                hTempTime[x - 1][y] = 2;
             }
             else if (dir == 2) // DOWN
             {
-                if (x >= n - 1 || vWall[x][y] || vTempWall[x][y])
-                {
-                    printf("Invalid wall position\n");
-                    continue;
-                }
-                vTempWall[x][y] = 1;
-                vTempTime[x][y] = 2;
-            }
-            else if (dir == 3) // LEFT
-            {
-                if (y <= 0 || hWall[x][y - 1] || hTempWall[x][y - 1])
-                {
-                    printf("Invalid wall position\n");
-                    continue;
-                }
-                hTempWall[x][y - 1] = 1;
-                hTempTime[x][y - 1] = 2;
-            }
-            else if (dir == 4) // RIGHT
-            {
-                if (y >= m - 1 || hWall[x][y] || hTempWall[x][y])
+                if (x >= n - 1 || hWall[x][y] || hTempWall[x][y])
                 {
                     printf("Invalid wall position\n");
                     continue;
                 }
                 hTempWall[x][y] = 1;
                 hTempTime[x][y] = 2;
+            }
+            else if (dir == 3) // LEFT
+            {
+                if (y <= 0 || vWall[x][y - 1] || vTempWall[x][y - 1])
+                {
+                    printf("Invalid wall position\n");
+                    continue;
+                }
+                vTempWall[x][y - 1] = 1;
+                vTempTime[x][y - 1] = 2;
+            }
+            else if (dir == 4) // RIGHT
+            {
+                if (y >= m - 1 || vWall[x][y] || vTempWall[x][y])
+                {
+                    printf("Invalid wall position\n");
+                    continue;
+                }
+                vTempWall[x][y] = 1;
+                vTempTime[x][y] = 2;
             }
             else
             {
@@ -252,11 +252,11 @@ int movePlayer(int idx)
             {
                 for (int j = 0; j < m; j++)
                 {
-                    if (vTempWall[i][j])
-                        vTempTime[i][j]++;
-
                     if (hTempWall[i][j])
                         hTempTime[i][j]++;
+
+                    if (vTempWall[i][j])
+                        vTempTime[i][j]++;
                 }
             }
             saveGame();

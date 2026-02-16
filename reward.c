@@ -164,7 +164,6 @@ void applyReward(int playerIdx, struct Reward r)
 void earthshake(void)
 {
     printf("\nEARTHSHAKE!!!\n");
-    Sleep(700);
 
     // ===== players =====
     for (int i = 0; i < playerCount; i++)
@@ -196,7 +195,6 @@ void earthshake(void)
             clearScreen();
             initMap();
             printMap();
-            Sleep(300);
         }
     }
 
@@ -227,7 +225,6 @@ void earthshake(void)
             clearScreen();
             initMap();
             printMap();
-            Sleep(300);
         }
     }
 }

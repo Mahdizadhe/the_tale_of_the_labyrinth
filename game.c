@@ -88,14 +88,14 @@ void saveGame(void)
     fwrite(&players, sizeof(struct Entity), playerCount, file);
     fwrite(&hunters, sizeof(struct Entity), hunterCount, file);
 
-    fwrite(&vWall, sizeof(vWall), 1, file);
     fwrite(&hWall, sizeof(hWall), 1, file);
+    fwrite(&vWall, sizeof(vWall), 1, file);
 
-    fwrite(&vTempWall, sizeof(vTempWall), 1, file);
     fwrite(&hTempWall, sizeof(hTempWall), 1, file);
+    fwrite(&vTempWall, sizeof(vTempWall), 1, file);
 
-    fwrite(&vTempTime, sizeof(vTempTime), 1, file);
     fwrite(&hTempTime, sizeof(hTempTime), 1, file);
+    fwrite(&vTempTime, sizeof(vTempTime), 1, file);
 
     fwrite(&rewards, sizeof(struct Reward), rewardCount, file);
 
@@ -133,14 +133,14 @@ int loadGame()
     fread(&players, sizeof(struct Entity), playerCount, file);
     fread(&hunters, sizeof(struct Entity), hunterCount, file);
 
-    fread(&vWall, sizeof(vWall), 1, file);
     fread(&hWall, sizeof(hWall), 1, file);
+    fread(&vWall, sizeof(vWall), 1, file);
 
-    fread(&vTempWall, sizeof(vTempWall), 1, file);
     fread(&hTempWall, sizeof(hTempWall), 1, file);
+    fread(&vTempWall, sizeof(vTempWall), 1, file);
 
-    fread(&vTempTime, sizeof(vTempTime), 1, file);
     fread(&hTempTime, sizeof(hTempTime), 1, file);
+    fread(&vTempTime, sizeof(vTempTime), 1, file);
 
     fread(&rewards, sizeof(struct Reward), rewardCount, file);
 

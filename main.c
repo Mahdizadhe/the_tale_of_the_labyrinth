@@ -56,7 +56,7 @@ int main()
                 // Clear previous walls
                 for (i = 0; i < n; i++)
                     for (j = 0; j < m; j++)
-                        vWall[i][j] = hWall[i][j] = 0;
+                        hWall[i][j] = vWall[i][j] = 0;
 
                 generateWalls(wallCount); // Generate new walls
             } while (!isConnected()); // Repeat until map is fully connected
